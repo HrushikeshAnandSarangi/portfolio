@@ -1,28 +1,84 @@
 "use client"
-import { useState, useEffect, useRef, Suspense, useMemo } from "react"
+import { useState, useEffect, useRef, Suspense, useMemo, useCallback, memo } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { motion, useAnimation } from "framer-motion"
 import * as THREE from "three"
 import type { ShaderMaterial } from "three"
 import { ChevronDown, Mouse } from "lucide-react"
 
-// Main Component
-const App = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  // const { scrollY } = useScroll()
-  // const backgroundY = useTransform(scrollY, [0, 500], [0, -150])
+const usePerformanceMonitor = () => {
+  const [isLowPerformance, setIsLowPerformance] = useState(false)
+  const frameCount = useRef(0)
+  const lastTime = useRef(performance.now())
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 2 - 1,
-        y: -(e.clientY / window.innerHeight) * 2 + 1,
-      })
+    const checkPerformance = () => {
+      frameCount.current++
+      const now = performance.now()
+
+      if (frameCount.current % 60 === 0) {
+        const fps = 60000 / (now - lastTime.current)
+        setIsLowPerformance(fps < 30)
+        lastTime.current = now
+      }
     }
 
-    window.addEventListener("mousemove", handleMouseMove)
-    return () => window.removeEventListener("mousemove", handleMouseMove)
+    const interval = setInterval(checkPerformance, 16)
+    return () => clearInterval(interval)
   }, [])
+
+  return isLowPerformance
+}
+
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(
+        window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+      )
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  return isMobile
+}
+
+const useThrottledMouse = (delay = 16) => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const lastUpdate = useRef(0)
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      const now = performance.now()
+      if (now - lastUpdate.current >= delay) {
+        setMousePosition({
+          x: (e.clientX / window.innerWidth) * 2 - 1,
+          y: -(e.clientY / window.innerHeight) * 2 + 1,
+        })
+        lastUpdate.current = now
+      }
+    },
+    [delay],
+  )
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove, { passive: true })
+    return () => window.removeEventListener("mousemove", handleMouseMove)
+  }, [handleMouseMove])
+
+  return mousePosition
+}
+
+// Main Component
+const App = () => {
+  const mousePosition = useThrottledMouse(32) // Throttled mouse updates for better performance
+  const isLowPerformance = usePerformanceMonitor()
+  const isMobile = useIsMobile()
 
   return (
     <div className="relative w-full min-h-screen bg-gray-50 text-gray-900 overflow-x-hidden font-sans">
@@ -39,49 +95,68 @@ const App = () => {
             </div>
           }
         >
-          <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
-            <FlowingTopographicAnimation mousePosition={mousePosition} />
+          <Canvas
+            camera={{ position: [0, 0, 5], fov: 75 }}
+            dpr={isMobile ? 1 : Math.min(window.devicePixelRatio, 2)} // Limited DPR for better mobile performance
+          >
+            <FlowingTopographicAnimation
+              mousePosition={mousePosition}
+              isLowPerformance={isLowPerformance}
+              isMobile={isMobile}
+            />
           </Canvas>
         </Suspense>
         <Overlay />
         <ScrollIndicator />
 
-        {/* Interactive particles */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          animate={{
-            background: `radial-gradient(circle at ${(mousePosition.x + 1) * 50}% ${(-mousePosition.y + 1) * 50}%, rgba(0,0,0,0.1) 0%, transparent 50%)`,
-          }}
-          transition={{ duration: 0.3 }}
-        />
+        {!isMobile && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            animate={{
+              background: `radial-gradient(circle at ${(mousePosition.x + 1) * 50}% ${(-mousePosition.y + 1) * 50}%, rgba(0,0,0,0.1) 0%, transparent 50%)`,
+            }}
+            transition={{ duration: 0.3 }}
+          />
+        )}
       </motion.div>
     </div>
   )
 }
 
-const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: number; y: number } }) => {
-  const { viewport } = useThree()
-  const materialRef = useRef<ShaderMaterial>(null)
+const FlowingTopographicAnimation = memo(
+  ({
+    mousePosition,
+    isLowPerformance,
+    isMobile,
+  }: {
+    mousePosition: { x: number; y: number }
+    isLowPerformance: boolean
+    isMobile: boolean
+  }) => {
+    const { viewport } = useThree()
+    const materialRef = useRef<ShaderMaterial>(null)
 
-  const uniforms = useMemo(
-    () => ({
-      u_time: { value: 0.0 },
-      u_mouse: { value: new THREE.Vector2(0, 0) },
-      u_resolution: { value: new THREE.Vector2(0, 0) },
-    }),
-    [],
-  )
+    const uniforms = useMemo(
+      () => ({
+        u_time: { value: 0.0 },
+        u_mouse: { value: new THREE.Vector2(0, 0) },
+        u_resolution: { value: new THREE.Vector2(0, 0) },
+        u_quality: { value: isMobile || isLowPerformance ? 0.5 : 1.0 }, // Quality scaling for performance
+      }),
+      [isMobile, isLowPerformance],
+    )
 
-  useFrame((state) => {
-    const { clock, size } = state
-    if (materialRef.current) {
-      materialRef.current.uniforms.u_time.value = clock.getElapsedTime()
-      materialRef.current.uniforms.u_mouse.value.lerp(new THREE.Vector2(mousePosition.x, mousePosition.y), 0.005)
-      materialRef.current.uniforms.u_resolution.value.set(size.width * viewport.dpr, size.height * viewport.dpr)
-    }
-  })
+    useFrame((state) => {
+      const { clock, size } = state
+      if (materialRef.current) {
+        materialRef.current.uniforms.u_time.value = clock.getElapsedTime()
+        const lerpSpeed = isMobile ? 0.003 : 0.005
+        materialRef.current.uniforms.u_mouse.value.lerp(new THREE.Vector2(mousePosition.x, mousePosition.y), lerpSpeed)
+        materialRef.current.uniforms.u_resolution.value.set(size.width * viewport.dpr, size.height * viewport.dpr)
+      }
+    })
 
-  const vertexShader = `
+    const vertexShader = `
         varying vec2 vUv;
         void main() {
             vUv = uv;
@@ -89,10 +164,11 @@ const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: nu
         }
     `
 
-  const fragmentShader = `
+    const fragmentShader = `
         uniform float u_time;
         uniform vec2 u_resolution;
         uniform vec2 u_mouse;
+        uniform float u_quality;
         varying vec2 vUv;
 
         // Simplex 2D noise
@@ -133,7 +209,9 @@ const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: nu
             float amplitude = 0.5;
             float frequency = 1.0;
             
+            int iterations = u_quality > 0.7 ? 5 : 3; // Adaptive iterations based on quality
             for(int i = 0; i < 5; i++) {
+                if(i >= iterations) break;
                 value += amplitude * snoise(p * frequency);
                 amplitude *= 0.5;
                 frequency *= 2.0;
@@ -203,24 +281,26 @@ const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: nu
         }
     `
 
-  return (
-    <mesh scale={[viewport.width, viewport.height, 1]}>
-      <planeGeometry args={[1, 1]} />
-      <shaderMaterial
-        ref={materialRef}
-        uniforms={uniforms}
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        transparent={true}
-      />
-    </mesh>
-  )
-}
+    return (
+      <mesh scale={[viewport.width, viewport.height, 1]}>
+        <planeGeometry args={[1, 1]} />
+        <shaderMaterial
+          ref={materialRef}
+          uniforms={uniforms}
+          vertexShader={vertexShader}
+          fragmentShader={fragmentShader}
+          transparent={true}
+        />
+      </mesh>
+    )
+  },
+)
+
+FlowingTopographicAnimation.displayName = "FlowingTopographicAnimation"
 
 const Overlay = () => {
   const nameControls = useAnimation()
   const taglineControls = useAnimation()
-  const [isHovered, setIsHovered] = useState(false)
 
   useEffect(() => {
     const sequence = async () => {
@@ -273,32 +353,11 @@ const Overlay = () => {
     },
   }
 
-  const letterAnimation = {
-    rest: {
-      y: 0,
-      scale: 1,
-      rotateY: 0,
-      rotateZ: 0,
-      filter: "blur(0px)",
-    },
-    hover: {
-      y: [-1, -12, -6],
-      scale: [1, 1.05, 1.02],
-      rotateY: [0, 6, 0],
-      rotateZ: [0, -1, 0.5],
-      filter: ["blur(0px)", "blur(0.5px)", "blur(0px)"],
-    },
-  }
-
   const name = "Hrushikesh Anand Sarangi"
 
   return (
     <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-center items-center pointer-events-none px-4 sm:px-6 lg:px-8">
-      <motion.div
-        className="text-center pointer-events-auto cursor-pointer"
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-      >
+      <motion.div className="text-center">
         <motion.h1
           className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tighter text-gray-800 flex flex-wrap justify-center overflow-hidden text-balance leading-tight"
           variants={nameVariants}
@@ -309,19 +368,11 @@ const Overlay = () => {
           {name.split("").map((char, i) => (
             <motion.span
               key={`${char}-${i}`}
-              variants={letterAnimation}
-              animate={isHovered ? "hover" : "rest"}
               className="inline-block"
               style={{
                 padding: "0 1px",
                 transformOrigin: "center bottom",
                 transformStyle: "preserve-3d",
-              }}
-              transition={{
-                duration: isHovered ? 0.5 : 0.4,
-                ease: [0.25, 0.1, 0.25, 1],
-                times: isHovered ? [0, 0.5, 1] : undefined,
-                delay: i * 0.02,
               }}
             >
               {char === " " ? "\u00A0" : char}
