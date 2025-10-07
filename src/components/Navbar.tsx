@@ -4,7 +4,7 @@ import type React from "react"
 
 import Link from "next/link"
 import { useEffect, useId, useRef, useState } from "react"
-import { Instagram, Twitter, Youtube, Gamepad, X, Play, Pause } from "lucide-react"
+import { Instagram, Twitter, Youtube, Gamepad, X, Play, Pause, Linkedin, Github } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type NavItem = { label: string; href: string }
@@ -13,13 +13,11 @@ type NavItem = { label: string; href: string }
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/" },
   { label: "Who am i?", href: "/about" },
-  { label: "Past Experience", href: "/experience" },
   { label: "Projects", href: "/projects" },
-  { label: "Blogs", href: "/blogs" },
   { label: "Achievements", href: "/achievements" },
 ]
 
-const SPOTIFY_TRACK_ID = "71GtJ7jyfkNKbowx1H56Lw" 
+const SPOTIFY_TRACK_ID = "71GtJ7jyfkNKbowx1H56Lw"
 
 // --- MAIN NAVBAR COMPONENT ---
 export default function Navbar() {
@@ -80,9 +78,9 @@ export default function Navbar() {
   }, [open])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full pointer-events-none">
       {showPlayer && (
-        <div className="fixed bottom-4 right-4 z-60 bg-black rounded-lg p-2 shadow-2xl border-2 border-white max-w-[calc(100vw-2rem)]">
+        <div className="fixed bottom-4 right-4 z-60 bg-black rounded-lg p-2 shadow-2xl border-2 border-white max-w-[calc(100vw-2rem)] pointer-events-auto">
           <div className="flex items-center gap-2 mb-2">
             <div className={cn("w-2 h-2 rounded-full", isPlaying ? "bg-green-500 animate-pulse" : "bg-gray-400")} />
             <span className="text-white text-xs font-mono">Now {isPlaying ? "Playing" : "Paused"}</span>
@@ -104,7 +102,7 @@ export default function Navbar() {
       )}
 
       {/* The nav is now transparent, floating over page content */}
-      <nav className="relative mx-auto flex h-16 sm:h-18 lg:h-20 w-full max-w-7xl items-center justify-between px-5">
+      <nav className="relative mx-auto flex h-16 sm:h-18 lg:h-20 w-full max-w-7xl items-center justify-between px-5 pointer-events-auto">
         {/* Left: Wordmark with improved typography */}
         <div className="flex items-center gap-3 sm:gap-4 lg:gap-5 flex-shrink-0 mt-6 sm:mt-7 lg:mt-8">
           <Link href="/" className="group select-none flex-shrink-0 min-w-0" aria-label="Portfolio home">
@@ -117,33 +115,30 @@ export default function Navbar() {
           </Link>
         </div>
 
-        
-        {
-          !open && (
-            <div className="absolute left-1/2 -top-1.5 -translate-x-1/2">
-              <div className="h-8 w-15 sm:h-14 sm:w-36 lg:h-16 lg:w-40 rounded-b-[24px] sm:rounded-b-[32px] lg:rounded-b-[38px] border-b-2 border-l-2 border-r-2 border-black bg-white">
-                <button
-                  ref={buttonRef}
-                  type="button"
-                  aria-haspopup="dialog"
-                  aria-expanded={open}
-                  aria-controls={dialogId}
-                  onClick={() => setOpen((v) => !v)}
-                  className={cn(
-                    "group flex h-full w-full items-center justify-center rounded-b-[12px] sm:rounded-b-[14px] lg:rounded-b-[16px]",
-                    "focus:outline-none focus:ring-2  focus:ring-offset-2 ",
-                    "transition-all duration-200  active:scale-95"
-                  )}
-                >
-                  <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
-                  <div className="scale-[0.5] sm:scale-[0.55] lg:scale-[0.6]">
-                    <Hamburger open={open} />
-                  </div>
-                </button>
-              </div>
+        {!open && (
+          <div className="absolute left-1/2 -top-1.5 -translate-x-1/2">
+            <div className="h-8 w-15 sm:h-14 sm:w-36 lg:h-16 lg:w-40 rounded-b-[24px] sm:rounded-b-[32px] lg:rounded-b-[38px] border-b-2 border-l-2 border-r-2 border-black bg-white">
+              <button
+                ref={buttonRef}
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded={open}
+                aria-controls={dialogId}
+                onClick={() => setOpen((v) => !v)}
+                className={cn(
+                  "group flex h-full w-full items-center justify-center rounded-b-[12px] sm:rounded-b-[14px] lg:rounded-b-[16px]",
+                  "focus:outline-none focus:ring-2  focus:ring-offset-2 ",
+                  "transition-all duration-200  active:scale-95",
+                )}
+              >
+                <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
+                <div className="scale-[0.5] sm:scale-[0.55] lg:scale-[0.6]">
+                  <Hamburger open={open} />
+                </div>
+              </button>
             </div>
-          )
-        }
+          </div>
+        )}
 
         {/* Right: Action buttons */}
         <div className="hidden sm:flex items-center gap-3 sm:gap-4 lg:gap-5 flex-shrink-0 mt-6 sm:mt-7 lg:mt-8">
@@ -210,7 +205,11 @@ export default function Navbar() {
 
       {/* Dim backdrop */}
       {open && (
-        <div aria-hidden className="fixed inset-0 z-40 bg-black/50 backdrop-blur-md" onClick={() => setOpen(false)} />
+        <div
+          aria-hidden
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-md pointer-events-auto"
+          onClick={() => setOpen(false)}
+        />
       )}
 
       {/* Smoother, Sliding Menu Panel */}
@@ -284,7 +283,7 @@ export default function Navbar() {
             <div className="px-4 sm:px-6 lg:px-10 pb-4 sm:pb-6 pt-3">
               <div className="flex items-center justify-center gap-4 sm:gap-5 text-black">
                 <a
-                  href="#"
+                  href="https://www.instagram.com/hrushikesh_a_sarangi/"
                   aria-label="Instagram"
                   className="opacity-70 hover:opacity-100 hover:scale-110 transition-all duration-200 active:scale-95 p-2"
                 >
@@ -292,15 +291,15 @@ export default function Navbar() {
                   <Instagram size={24} className="hidden sm:block" />
                 </a>
                 <a
-                  href="#"
-                  aria-label="Game"
+                  href="https://www.linkedin.com/in/hrushikesh-anand-sarangi-645b02269/"
+                  aria-label="LinkedIn"
                   className="opacity-70 hover:opacity-100 hover:scale-110 transition-all duration-200 active:scale-95 p-2"
                 >
-                  <Gamepad size={20} className="sm:hidden" />
-                  <Gamepad size={24} className="hidden sm:block" />
+                  <Linkedin size={20} className="sm:hidden" />
+                  <Linkedin size={24} className="hidden sm:block" />
                 </a>
                 <a
-                  href="#"
+                  href="https://x.com/anand_sarangi"
                   aria-label="Twitter"
                   className="opacity-70 hover:opacity-100 hover:scale-110 transition-all duration-200 active:scale-95 p-2"
                 >
@@ -308,12 +307,12 @@ export default function Navbar() {
                   <Twitter size={24} className="hidden sm:block" />
                 </a>
                 <a
-                  href="#"
-                  aria-label="Youtube"
+                  href="https://github.com/HrushikeshAnandSarangi"
+                  aria-label="Github"
                   className="opacity-70 hover:opacity-100 hover:scale-110 transition-all duration-200 active:scale-95 p-2"
                 >
-                  <Youtube size={20} className="sm:hidden" />
-                  <Youtube size={24} className="hidden sm:block" />
+                  <Github size={20} className="sm:hidden" />
+                  <Github size={24} className="hidden sm:block" />
                 </a>
               </div>
             </div>

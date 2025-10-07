@@ -1,11 +1,10 @@
-import WhoIAmSection from '@/components/Aboutme'
+import ProjectsPage from '@/components/ProjectPage'
 import React from 'react'
 
 export default function page() {
   return (
     <>
-      
-      <WhoIAmSection/>
+        <ProjectsPage/>
     </>
   )
 }
