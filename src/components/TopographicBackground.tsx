@@ -1,75 +1,28 @@
 "use client"
-import { useRef, useMemo, memo, useCallback } from "react"
+import { useRef, useMemo } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import * as THREE from "three"
 import type { ShaderMaterial } from "three"
 
-const usePerformanceMonitor = () => {
-  const frameCount = useRef(0)
-  const lastTime = useRef(performance.now())
-  const isLowPerformance = useRef(false)
-
-  const checkPerformance = useCallback(() => {
-    frameCount.current++
-    const now = performance.now()
-
-    if (frameCount.current % 60 === 0) {
-      const fps = 60000 / (now - lastTime.current)
-      isLowPerformance.current = fps < 30
-      lastTime.current = now
-    }
-  }, [])
-
-  return { checkPerformance, isLowPerformance: isLowPerformance.current }
-}
-
-const useIsMobile = () => {
-  const isMobile = useRef(false)
-
-  if (typeof window !== "undefined") {
-    isMobile.current =
-      window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-  }
-
-  return isMobile.current
-}
-
-const FlowingTopographicAnimation = memo(({ mousePosition }: { mousePosition: { x: number; y: number } }) => {
+const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: number; y: number } }) => {
   const { viewport } = useThree()
   const materialRef = useRef<ShaderMaterial>(null)
-  const { checkPerformance, isLowPerformance } = usePerformanceMonitor()
-  const isMobile = useIsMobile()
 
   const uniforms = useMemo(
     () => ({
       u_time: { value: 0.0 },
       u_mouse: { value: new THREE.Vector2(0, 0) },
       u_resolution: { value: new THREE.Vector2(0, 0) },
-      u_quality: { value: isMobile || isLowPerformance ? 0.5 : 1.0 }, // Quality scaling
     }),
-    [isMobile, isLowPerformance],
+    [],
   )
 
-  const frameCount = useRef(0)
   useFrame((state) => {
-    frameCount.current++
-    checkPerformance()
-
-    // Update every 2nd frame on mobile, every frame on desktop
-    if (isMobile && frameCount.current % 2 !== 0) return
-
     const { clock, size } = state
     if (materialRef.current) {
       materialRef.current.uniforms.u_time.value = clock.getElapsedTime()
-
-      const lerpSpeed = isMobile ? 0.003 : 0.005
-      materialRef.current.uniforms.u_mouse.value.lerp(new THREE.Vector2(mousePosition.x, mousePosition.y), lerpSpeed)
-
-      const dpr = isMobile ? 1 : Math.min(viewport.dpr, 2)
-      materialRef.current.uniforms.u_resolution.value.set(size.width * dpr, size.height * dpr)
-
-      // Update quality based on performance
-      materialRef.current.uniforms.u_quality.value = isMobile || isLowPerformance ? 0.5 : 1.0
+      materialRef.current.uniforms.u_mouse.value.lerp(new THREE.Vector2(mousePosition.x, mousePosition.y), 0.005)
+      materialRef.current.uniforms.u_resolution.value.set(size.width * viewport.dpr, size.height * viewport.dpr)
     }
   })
 
@@ -85,7 +38,6 @@ const FlowingTopographicAnimation = memo(({ mousePosition }: { mousePosition: { 
         uniform float u_time;
         uniform vec2 u_resolution;
         uniform vec2 u_mouse;
-        uniform float u_quality;
         varying vec2 vUv;
 
         // Simplex 2D noise
@@ -125,10 +77,7 @@ const FlowingTopographicAnimation = memo(({ mousePosition }: { mousePosition: { 
             float amplitude = 0.5;
             float frequency = 1.0;
             
-            // Reduce iterations on low-quality devices
-            int iterations = u_quality > 0.7 ? 5 : 3;
             for(int i = 0; i < 5; i++) {
-                if(i >= iterations) break;
                 value += amplitude * snoise(p * frequency);
                 amplitude *= 0.5;
                 frequency *= 2.0;
@@ -141,11 +90,10 @@ const FlowingTopographicAnimation = memo(({ mousePosition }: { mousePosition: { 
             float aspectRatio = u_resolution.x / u_resolution.y;
             scaledUv.x *= aspectRatio;
             
-            float timeScale = u_quality > 0.7 ? 1.0 : 0.7;
-            float time1 = u_time * 0.02 * timeScale;
-            float time2 = u_time * 0.015 * timeScale;
+            float time1 = u_time * 0.02;
+            float time2 = u_time * 0.015;
             
-            vec2 mouseInfluence = u_mouse * (u_quality > 0.7 ? 0.3 : 0.15);
+            vec2 mouseInfluence = u_mouse * 0.3;
             
             float wave1 = wave(scaledUv + mouseInfluence, 1.0, 0.4, 0.3, vec2(1.0, 0.2));
             float wave2 = wave(scaledUv + mouseInfluence * 0.8, 1.5, 0.3, 0.2, vec2(0.8, 0.6));
@@ -211,30 +159,20 @@ const FlowingTopographicAnimation = memo(({ mousePosition }: { mousePosition: { 
       />
     </mesh>
   )
-})
-
-FlowingTopographicAnimation.displayName = "FlowingTopographicAnimation"
+}
 
 interface TopographicBackgroundProps {
   mousePosition: { x: number; y: number }
 }
 
-const TopographicBackground = memo(({ mousePosition }: TopographicBackgroundProps) => {
-  const isMobile = useIsMobile()
-
+const TopographicBackground = ({ mousePosition }: TopographicBackgroundProps) => {
   return (
     <div className="absolute inset-0 w-full h-full">
-      <Canvas
-        camera={{ position: [0, 0, 5], fov: 75 }}
-        dpr={isMobile ? 1 : Math.min(window.devicePixelRatio, 2)} // Limited DPR for mobile
-        performance={{ min: 0.5 }} // Performance scaling
-      >
+      <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
         <FlowingTopographicAnimation mousePosition={mousePosition} />
       </Canvas>
     </div>
   )
-})
-
-TopographicBackground.displayName = "TopographicBackground"
+}
 
 export default TopographicBackground
