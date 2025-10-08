@@ -16,7 +16,7 @@ const whoIAmItems: TimelineItem[] = [
     {
         title: "Foundations in Engineering & Design",
         organization: "National Institute of Technology, Rourkela",
-        period: "2021 – Present",
+        period: "2023 – Present",
         description: "My academic journey began at the intersection of design and technology. Pursuing Industrial Design gave me a unique perspective on product development, while my deep dive into computer science fundamentals provided the engineering rigor to build robust, scalable applications.",
         highlights: [
             "Core Specializations: Distributed Systems, Data Structures & Algorithms, and Cloud Computing.",
@@ -25,7 +25,7 @@ const whoIAmItems: TimelineItem[] = [
     {
         title: "Global Platform for IEEE INDISCON",
         organization: "Web Developer",
-        period: "September 2023 – Present",
+        period: "Jan 2023 – March",
         description: "I led the development of the official web platform for an international IEEE conference, creating a seamless digital experience for over 500 global participants. This high-stakes project honed my skills in building secure, reliable, and user-centric applications from the ground up.",
         highlights: [
             "Engineered a full-stack solution with secure registration and multi-track event scheduling.",
