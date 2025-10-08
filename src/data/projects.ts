@@ -18,8 +18,9 @@ export const projects: Project[] = [
     description:
       "Anomally detector with consideration for startup , shutdown and steady state for Industry grade machines like Turbofan Engine Degradation , deployed on edge device.",
     image: "https://res.cloudinary.com/dk6m1qejk/image/upload/v1759924366/microcontroller_uxyr9a.jpg",
-    githubLink: "https://github.com/username/ecommerce",
-    techStack: ["Grafana", "MQTT", "Autoencoders", "PostgreSQL", "Flask","Raspberry Pi", "Nginx","Docker"],
+    demoLink:"https://youtu.be/_kz0JfCGYlo",
+    githubLink: "https://github.com/HrushikeshAnandSarangi/SmartSentry",
+    techStack: ["Grafana", "MQTT", "Autoencoders", "PostgreSQL", "Raspberry Pi", "Nginx","Docker"],
     featured: true,
     category: "Iot",
   },
@@ -77,6 +78,34 @@ export const projects: Project[] = [
     githubLink: "https://github.com/HrushikeshAnandSarangi/Flashcard-Frenzy",
     techStack: ["Next.js","MongoDb","Supabase","socker.io","ExpressJs","Jest"],
     category: "Full Stack",
+  },
+  {
+    id:"7",
+    name:"IEEE Indiscon 2025",
+    description:"Official Website for IEEE Indiscon Conference 2025.",
+    image:"https://res.cloudinary.com/dk6m1qejk/image/upload/v1758738244/Screenshot_2025-09-24_235334_pu3e11.png",
+    deployedLink:"https://www.ieeeindiscon.org/",
+    techStack:["Next.js","tailwindcss"],
+    category:"Full Stack"
+  },
+  
+  {
+    id:"8",
+    name:"Indian Pluralism Foundation",
+    description:"Official Website for Indian Pluralism Foundation.",
+    image:"https://res.cloudinary.com/dk6m1qejk/image/upload/v1758738205/Screenshot_2025-09-24_235258_hfzc5n.png",
+    deployedLink:"https://indianpluralism.org/",
+    techStack:["Next.js","tailwindcss"],
+    category:"Full Stack"
+  },
+  {
+    id:"9",
+    name:"ALL Detector",
+    description:"Acute Lymphoblastic Leukemia Detector using GAN Based diffusion model deployed on a mobile device.",
+    image:"https://res.cloudinary.com/dk6m1qejk/image/upload/v1759924366/microcontroller_uxyr9a.jpg",
+    demoLink:"https://youtu.be/KLpIaKE_rCw",
+    techStack:["Next.js","tailwindcss"],
+    category:"IoT"
   },
 ]
 
