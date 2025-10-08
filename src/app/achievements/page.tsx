@@ -28,30 +28,30 @@ const useThrottledMouse = (delay = 16) => {
 }
 const hackathons = [
   {
-    title: "Smart City IoT Dashboard",
-    event: "Hack the Future",
-    year: "2024",
-    placement: "Winner",
+    title: "Leukemia Detector",
+    event: "Medhamanthan",
+    year: "2025",
+    placement: "3rd Place",
     description:
-      "Built a real-time IoT monitoring dashboard with alerting and geospatial overlays for city infrastructure.",
-    tags: ["IoT", "Realtime", "Maps", "Edge"],
+      "Built a mobile compact device which will analyse blood smeared images and detect Acute Lymphoblastic Leukemia",
+    tags: ["IoT", "GAN Model",  "Edge"],
   },
   {
-    title: "AI Email Summarizer",
-    event: "Build with AI",
-    year: "2023",
-    placement: "2nd Place",
+    title: "MetaFin",
+    event: "Hackfest IIT Dhanbad 2025",
+    year: "2025",
+    placement: "3rd Place in ILNB problem statement",
     description:
-      "Created an AI-powered summarizer that converts long emails into concise action points with tone control.",
-    tags: ["AI", "NLP", "Next.js"],
+      "Created a Jargon free financial assitant.",
+    tags: ["AI", "LLM", "Next.js"],
   },
   {
-    title: "FinOps Insight",
-    event: "Open Fin Hack",
-    year: "2023",
+    title: "Vigrah",
+    event: "E-Toycathon 2025",
+    year: "2025",
     placement: "Finalist",
-    description: "Analyzed cloud spend and surfaced actionable savings with automated recommendations.",
-    tags: ["FinOps", "Dashboards", "Analytics"],
+    description: "Built a Bipedal Bot which can be controlled through an mobile application with teaching abilities for childrens.",
+    tags: ["Robotics", "Mobile Development", "LLm"],
   },
 ]
 
