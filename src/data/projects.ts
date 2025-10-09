@@ -104,7 +104,7 @@ export const projects: Project[] = [
     description:"Acute Lymphoblastic Leukemia Detector using GAN Based diffusion model deployed on a mobile device.",
     image:"https://res.cloudinary.com/dk6m1qejk/image/upload/v1759924366/microcontroller_uxyr9a.jpg",
     demoLink:"https://youtu.be/KLpIaKE_rCw",
-    techStack:["Next.js","tailwindcss"],
+    techStack:["Next.js","tailwindcss","Nignx","Raspberry Pi"],
     category:"IoT"
   },
 ]
