@@ -81,6 +81,8 @@ const technologies = [
     { name: "Postman", category: "DevOps & Tools" },
     { name: "MySQL", category: "Databases" },
     { name: "Supabase", category: "Databases" },
+    { name: "MongoDB", category: "Databases" },
+
 ];
 
 const techCategories = ["All", ...Array.from(new Set(technologies.map(t => t.category)))];
