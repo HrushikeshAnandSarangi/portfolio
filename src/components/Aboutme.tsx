@@ -82,6 +82,7 @@ const technologies = [
     { name: "MySQL", category: "Databases" },
     { name: "Supabase", category: "Databases" },
     { name: "MongoDB", category: "Databases" },
+    { name: "Rust", category:"Languages"},
 
 ];
 
