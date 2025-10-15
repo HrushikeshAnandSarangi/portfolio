@@ -56,7 +56,7 @@ const whoIAmItems: TimelineItem[] = [
         title: "Leadership in Technology",
         organization: "Web Development Head, AICHE NIT Rourkela",
         period: "June 2025 – Present",
-        description: "I believe in empowering my community through technology. As the Web Development Head for my university's AICHE chapter, I lead a team in enhancing our digital presence. This role is focused on mentorship, collaboration, and applying technical expertise to achieve organizational goals.",
+        description: "I believe in empowering my community through technology. As the Web Development Head for AICHE NITR chapter, I lead a team in enhancing our digital presence. This role is focused on mentorship, collaboration, and applying technical expertise to achieve organizational goals.",
         highlights: [
             "Spearheaded optimizations that improved website load performance by 25%."
         ]
