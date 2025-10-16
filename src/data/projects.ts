@@ -109,4 +109,4 @@ export const projects: Project[] = [
   },
 ]
 
-export const categories = ["All", "Full Stack", "Frontend", "AI/ML", "IoT", "Blockchain", "Productivity"]
+export const categories = ["All", "Full Stack", "Frontend", "AI/ML", "IoT", "Blockchain"]
