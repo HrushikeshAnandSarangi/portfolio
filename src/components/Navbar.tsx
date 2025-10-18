@@ -6,7 +6,6 @@ import Link from "next/link"
 import { useEffect, useId, useRef, useState } from "react"
 import { Instagram, Twitter, Youtube, Gamepad, X, Play, Pause, Linkedin, Github } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { HyperText } from "./ui/hyper-text"
 
 type NavItem = { label: string; href: string }
 
@@ -250,7 +249,7 @@ export default function Navbar() {
                     onClick={() => setOpen(false)}
                     className="flex h-12 sm:h-14 lg:h-16 items-center text-sm sm:text-base lg:text-lg font-bold uppercase tracking-[0.05em] hover:translate-x-2 hover:opacity-70 transition-all duration-200 focus:outline-none focus:translate-x-2 focus:opacity-70"
                   >
-                    <span className="truncate"><HyperText>{item.label}</HyperText></span>
+                    <span className="truncate">{item.label}</span>
                   </Link>
                 </li>
               ))}
