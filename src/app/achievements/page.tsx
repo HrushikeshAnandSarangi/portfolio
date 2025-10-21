@@ -31,7 +31,7 @@ const hackathons = [
     title: "Leukemia Detector",
     event: "Medhamanthan",
     year: "2025",
-    placement: "3rd Place",
+    placement: "3rd",
     description:
       "Built a mobile compact device which will analyse blood smeared images and detect Acute Lymphoblastic Leukemia",
     tags: ["IoT", "GAN Model",  "Edge"],
@@ -40,7 +40,7 @@ const hackathons = [
     title: "MetaFin",
     event: "Hackfest IIT Dhanbad 2025",
     year: "2025",
-    placement: "3rd Place in ILNB problem statement",
+    placement: "3rd",
     description:
       "Created a Jargon free financial assitant.",
     tags: ["AI", "LLM", "Next.js"],
