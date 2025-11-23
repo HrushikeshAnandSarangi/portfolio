@@ -5,12 +5,11 @@ import { motion, useAnimation } from "framer-motion"
 import * as THREE from "three"
 import type { ShaderMaterial } from "three"
 import { ChevronDown, Mouse } from "lucide-react"
+import Link from "next/link"
 
 // Main Component
 const App = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  // const { scrollY } = useScroll()
-  // const backgroundY = useTransform(scrollY, [0, 500], [0, -150])
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -25,7 +24,7 @@ const App = () => {
   }, [])
 
   return (
-    <div className="relative w-full min-h-screen bg-gray-50 text-gray-900 overflow-x-hidden font-sans">
+    <div className="relative w-full min-h-screen bg-white text-black overflow-x-hidden font-sans">
       {/* Hero Section */}
       <motion.div className="relative w-full h-screen overflow-hidden">
         <Suspense
@@ -34,7 +33,7 @@ const App = () => {
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                className="w-8 h-8 border-2 border-gray-400 border-t-gray-800 rounded-full"
+                className="w-8 h-8 border-2 border-black border-t-white rounded-full"
               />
             </div>
           }
@@ -184,10 +183,10 @@ const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: nu
             float finalLine = line1 * (0.8 + waveIntensity * 0.3) + 
                              line2 * (0.5 + waveIntensity * 0.2);
             
-            vec3 color1 = vec3(0.12, 0.12, 0.12);
-            vec3 color2 = vec3(0.3, 0.3, 0.3);
-            vec3 color3 = vec3(0.5, 0.5, 0.5);
-            vec3 color4 = vec3(0.7, 0.7, 0.7);
+            vec3 color1 = vec3(0.0, 0.0, 0.0);
+            vec3 color2 = vec3(0.0, 0.0, 0.0);
+            vec3 color3 = vec3(0.0, 0.0, 0.0);
+            vec3 color4 = vec3(0.0, 0.0, 0.0);
             
             vec3 lineColor = mix(color1, color2, smoothstep(-0.8, 0.2, combinedPattern));
             lineColor = mix(lineColor, color3, smoothstep(0.0, 0.6, combinedPattern));
@@ -220,46 +219,59 @@ const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: nu
 const Overlay = () => {
   const nameControls = useAnimation()
   const taglineControls = useAnimation()
-  const [isHovered, setIsHovered] = useState(false)
+  const coverControls = useAnimation()
+  const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const sequence = async () => {
-      await nameControls.start({
-        opacity: 1,
-        y: 0,
-        rotateX: 0,
-        scale: 1,
-        filter: "blur(0px)",
-        transition: {
-          duration: 1.2,
-          ease: [0.25, 0.1, 0.25, 1],
-          delay: 0.2,
-        },
-      })
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const sequence = async () => {
+              await coverControls.start({
+                scaleX: 0,
+                transition: {
+                  duration: 1.2,
+                  ease: [0.42, 0, 0.58, 1], // cubic-bezier easing for smooth flow
+                  delay: 0.2,
+                },
+                transformOrigin: "right",
+              })
 
-      await taglineControls.start({
-        opacity: 1,
-        y: 0,
-        scaleX: 1,
-        skewX: 0,
-        filter: "blur(0px)",
-        transition: {
-          duration: 0.8,
-          ease: [0.25, 0.1, 0.25, 1],
-          delay: 0.1,
-        },
-      })
+              await taglineControls.start({
+                opacity: 1,
+                y: 0,
+                filter: "blur(0px)",
+                transition: {
+                  duration: 0.6,
+                  ease: "easeOut",
+                  delay: 0.1,
+                },
+              })
+            }
+            sequence()
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.5 },
+    )
+
+    if (overlayRef.current) {
+      observer.observe(overlayRef.current)
     }
-    sequence()
-  }, [nameControls, taglineControls])
+
+    return () => {
+      if (overlayRef.current) {
+        observer.unobserve(overlayRef.current)
+      }
+    }
+  }, [nameControls, taglineControls, coverControls])
 
   const nameVariants = {
     initial: {
-      opacity: 0,
-      y: 60,
-      rotateX: 30,
-      scale: 0.9,
-      filter: "blur(4px)",
+      opacity: 1,
+      y: 0,
     },
   }
 
@@ -267,78 +279,74 @@ const Overlay = () => {
     initial: {
       opacity: 0,
       y: 40,
-      scaleX: 0.8,
-      skewX: -8,
       filter: "blur(3px)",
-    },
-  }
-
-  const letterAnimation = {
-    rest: {
-      y: 0,
-      scale: 1,
-      rotateY: 0,
-      rotateZ: 0,
-      filter: "blur(0px)",
-    },
-    hover: {
-      y: [-1, -12, -6],
-      scale: [1, 1.05, 1.02],
-      rotateY: [0, 6, 0],
-      rotateZ: [0, -1, 0.5],
-      filter: ["blur(0px)", "blur(0.5px)", "blur(0px)"],
     },
   }
 
   const name = "Hrushikesh Anand Sarangi"
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-center items-center pointer-events-none px-4 sm:px-6 lg:px-8">
-      <motion.div
-        className="text-center pointer-events-auto cursor-pointer"
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-      >
-        <motion.h1
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tighter text-gray-800 flex flex-wrap justify-center overflow-hidden text-balance leading-tight"
-          variants={nameVariants}
-          initial="initial"
-          animate={nameControls}
-          style={{ perspective: "800px" }}
-        >
-          {name.split("").map((char, i) => (
-            <motion.span
-              key={`${char}-${i}`}
-              variants={letterAnimation}
-              animate={isHovered ? "hover" : "rest"}
-              className="inline-block"
-              style={{
-                padding: "0 1px",
-                transformOrigin: "center bottom",
-                transformStyle: "preserve-3d",
-              }}
-              transition={{
-                duration: isHovered ? 0.5 : 0.4,
-                ease: [0.25, 0.1, 0.25, 1],
-                times: isHovered ? [0, 0.5, 1] : undefined,
-                delay: i * 0.02,
-              }}
-            >
-              {char === " " ? "\u00A0" : char}
-            </motion.span>
-          ))}
-        </motion.h1>
+    <div
+      ref={overlayRef}
+      className="absolute top-0 left-0 w-full h-full flex flex-col justify-center items-center pointer-events-none px-4 sm:px-6 lg:px-8"
+    >
+      <div className="text-center pointer-events-auto">
+        <div className="relative inline-block w-full">
+          <motion.h1
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-black flex justify-center overflow-hidden text-balance leading-tight whitespace-nowrap min-w-fit"
+            variants={nameVariants}
+            initial="initial"
+            animate={nameControls}
+            style={{ perspective: "800px" }}
+          >
+            {name}
+          </motion.h1>
+          <motion.div
+            className="absolute top-0 right-0 w-full h-full bg-black"
+            initial={{ scaleX: 1 }}
+            animate={coverControls}
+            style={{ transformOrigin: "right" }}
+          />
+        </div>
 
         <motion.p
-          className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-600 mt-4 sm:mt-6 lg:mt-8 tracking-wide text-pretty max-w-2xl mx-auto"
+          className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-black mt-4 sm:mt-6 lg:mt-8 tracking-wide text-pretty max-w-2xl mx-auto"
           variants={taglineVariants}
           initial="initial"
           animate={taglineControls}
           style={{ transformOrigin: "center" }}
         >
-          I build to scale
+          Building Pragmatic Solutions
         </motion.p>
-      </motion.div>
+
+        <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+          <Link href="/projects">
+            <motion.button
+              className="px-6 py-3 bg-black text-white font-medium rounded-md transition-all duration-300"
+              whileHover={{
+                boxShadow: "0 10px 24px rgba(0, 0, 0, 0.3)",
+                y: -2,
+              }}
+              whileTap={{ y: 0 }}
+            >
+              Explore Projects
+            </motion.button>
+          </Link>
+          <Link href="/about">
+            <motion.button
+              className="px-6 py-3 bg-white text-black font-medium rounded-md border border-black transition-all duration-300"
+              whileHover={{
+                boxShadow: "0 10px 24px rgba(0, 0, 0, 0.15)",
+                backgroundColor: "#f5f5f5",
+                y: -2,
+              }}
+              whileTap={{ y: 0 }}
+            >
+              About Me
+            </motion.button>
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }
@@ -366,7 +374,7 @@ const ScrollIndicator = () => {
       transition={{ duration: 0.5, delay: 3 }}
     >
       <motion.div
-        className="flex flex-col items-center text-gray-600"
+        className="flex flex-col items-center text-black"
         animate={{ y: [0, -8, 0] }}
         transition={{
           duration: 2,
@@ -391,7 +399,7 @@ const ScrollIndicator = () => {
 
       {/* Animated scroll line */}
       <motion.div
-        className="w-px bg-gradient-to-b from-gray-400 to-transparent mt-4"
+        className="w-px bg-gradient-to-b from-black to-transparent mt-4"
         initial={{ height: 0 }}
         animate={{ height: 40 }}
         transition={{ duration: 1, delay: 3.5 }}
