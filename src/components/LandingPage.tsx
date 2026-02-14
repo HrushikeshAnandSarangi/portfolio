@@ -6,23 +6,16 @@ import * as THREE from "three"
 import type { ShaderMaterial } from "three"
 import { ChevronDown, Mouse } from "lucide-react"
 import Link from "next/link"
+import { Pacifico } from 'next/font/google'
+
+const pacifico = Pacifico({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-pacifico',
+})
 
 // Main Component
 const App = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 2 - 1,
-        y: -(e.clientY / window.innerHeight) * 2 + 1,
-      })
-    }
-
-    window.addEventListener("mousemove", handleMouseMove)
-    return () => window.removeEventListener("mousemove", handleMouseMove)
-  }, [])
-
   return (
     <div className="relative w-full min-h-screen bg-white text-black overflow-x-hidden font-sans">
       {/* Hero Section */}
@@ -39,33 +32,23 @@ const App = () => {
           }
         >
           <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
-            <FlowingTopographicAnimation mousePosition={mousePosition} />
+            <FlowingTopographicAnimation />
           </Canvas>
         </Suspense>
         <Overlay />
         <ScrollIndicator />
-
-        {/* Interactive particles */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          animate={{
-            background: `radial-gradient(circle at ${(mousePosition.x + 1) * 50}% ${(-mousePosition.y + 1) * 50}%, rgba(0,0,0,0.1) 0%, transparent 50%)`,
-          }}
-          transition={{ duration: 0.3 }}
-        />
       </motion.div>
     </div>
   )
 }
 
-const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: number; y: number } }) => {
+const FlowingTopographicAnimation = () => {
   const { viewport } = useThree()
   const materialRef = useRef<ShaderMaterial>(null)
 
   const uniforms = useMemo(
     () => ({
       u_time: { value: 0.0 },
-      u_mouse: { value: new THREE.Vector2(0, 0) },
       u_resolution: { value: new THREE.Vector2(0, 0) },
     }),
     [],
@@ -75,7 +58,6 @@ const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: nu
     const { clock, size } = state
     if (materialRef.current) {
       materialRef.current.uniforms.u_time.value = clock.getElapsedTime()
-      materialRef.current.uniforms.u_mouse.value.lerp(new THREE.Vector2(mousePosition.x, mousePosition.y), 0.005)
       materialRef.current.uniforms.u_resolution.value.set(size.width * viewport.dpr, size.height * viewport.dpr)
     }
   })
@@ -89,9 +71,9 @@ const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: nu
     `
 
   const fragmentShader = `
+        precision mediump float;
         uniform float u_time;
         uniform vec2 u_resolution;
-        uniform vec2 u_mouse;
         varying vec2 vUv;
 
         // Simplex 2D noise
@@ -145,21 +127,19 @@ const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: nu
             float aspectRatio = u_resolution.x / u_resolution.y;
             scaledUv.x *= aspectRatio;
             
-            float time1 = u_time * 0.02;
-            float time2 = u_time * 0.015;
+            float time1 = u_time * 0.03;
+            float time2 = u_time * 0.02;
             
-            vec2 mouseInfluence = u_mouse * 0.3;
+            float wave1 = wave(scaledUv, 1.0, 0.4, 0.3, vec2(1.0, 0.2));
+            float wave2 = wave(scaledUv, 1.5, 0.3, 0.2, vec2(0.8, 0.6));
             
-            float wave1 = wave(scaledUv + mouseInfluence, 1.0, 0.4, 0.3, vec2(1.0, 0.2));
-            float wave2 = wave(scaledUv + mouseInfluence * 0.8, 1.5, 0.3, 0.2, vec2(0.8, 0.6));
+            float oceanWave1 = wave(scaledUv * 0.4, 0.6, 0.6, 0.15, vec2(1.0, 0.1));
+            float oceanWave2 = wave(scaledUv * 0.3, 0.8, 0.4, 0.2, vec2(0.9, 0.3));
             
-            float oceanWave1 = wave(scaledUv * 0.4 + mouseInfluence, 0.6, 0.6, 0.15, vec2(1.0, 0.1));
-            float oceanWave2 = wave(scaledUv * 0.3 + mouseInfluence * 0.4, 0.8, 0.4, 0.2, vec2(0.9, 0.3));
-            
-            vec2 flow1 = scaledUv * 0.6 + vec2(time1, time2 * 0.8) + mouseInfluence * 0.5;
+            vec2 flow1 = scaledUv * 0.6 + vec2(time1, time2 * 0.8);
             float noise1 = fbm(flow1 + vec2(wave1, wave2) * 0.6);
             
-            vec2 flow2 = scaledUv * 0.8 + vec2(time2 * 0.8, time1 * 0.6) + mouseInfluence * 0.3;
+            vec2 flow2 = scaledUv * 0.8 + vec2(time2 * 0.8, time1 * 0.6);
             float noise2 = fbm(flow2 + vec2(oceanWave1, oceanWave2) * 0.4) * 0.5;
             
             float combinedPattern = (wave1 + wave2 + oceanWave1 + oceanWave2) * 0.8 + noise1 + noise2;
@@ -184,9 +164,9 @@ const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: nu
                              line2 * (0.5 + waveIntensity * 0.2);
             
             vec3 color1 = vec3(0.0, 0.0, 0.0);
-            vec3 color2 = vec3(0.0, 0.0, 0.0);
-            vec3 color3 = vec3(0.0, 0.0, 0.0);
-            vec3 color4 = vec3(0.0, 0.0, 0.0);
+            vec3 color2 = vec3(0.05, 0.05, 0.05);
+            vec3 color3 = vec3(0.1, 0.1, 0.1);
+            vec3 color4 = vec3(0.15, 0.15, 0.15);
             
             vec3 lineColor = mix(color1, color2, smoothstep(-0.8, 0.2, combinedPattern));
             lineColor = mix(lineColor, color3, smoothstep(0.0, 0.6, combinedPattern));
@@ -217,9 +197,12 @@ const FlowingTopographicAnimation = ({ mousePosition }: { mousePosition: { x: nu
 }
 
 const Overlay = () => {
+  const controls = useAnimation()
+  const leftControls = useAnimation()
+  const rightControls = useAnimation()
   const nameControls = useAnimation()
   const taglineControls = useAnimation()
-  const coverControls = useAnimation()
+  const buttonsControls = useAnimation()
   const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -228,25 +211,38 @@ const Overlay = () => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const sequence = async () => {
-              await coverControls.start({
-                scaleX: 0,
-                transition: {
-                  duration: 1.2,
-                  ease: [0.42, 0, 0.58, 1], // cubic-bezier easing for smooth flow
-                  delay: 0.2,
-                },
-                transformOrigin: "right",
+              await controls.start("visible")
+
+              await leftControls.start({
+                opacity: 1,
+                y: 0,
+                transition: { delay: 0.2, duration: 0.3, ease: "easeInOut" },
+              })
+
+              await rightControls.start({
+                opacity: 1,
+                y: 0,
+                transition: { delay: 0.2, duration: 0.3, ease: "easeInOut" },
+              })
+
+              await nameControls.start({
+                opacity: 1,
+                y: 0,
+                filter: "blur(0px)",
+                transition: { duration: 0.4, ease: "easeInOut", delay: 0.5 },
               })
 
               await taglineControls.start({
                 opacity: 1,
                 y: 0,
                 filter: "blur(0px)",
-                transition: {
-                  duration: 0.6,
-                  ease: "easeOut",
-                  delay: 0.1,
-                },
+                transition: { duration: 0.5, ease: "easeInOut", delay: 0.5 },
+              })
+
+              await buttonsControls.start({
+                opacity: 1,
+                x: 0,
+                transition: { duration: 0.3, ease: "easeInOut", delay: 0.5 },
               })
             }
             sequence()
@@ -266,88 +262,144 @@ const Overlay = () => {
         observer.unobserve(overlayRef.current)
       }
     }
-  }, [nameControls, taglineControls, coverControls])
+  }, [controls, leftControls, rightControls, nameControls, taglineControls, buttonsControls])
 
-  const nameVariants = {
-    initial: {
-      opacity: 1,
-      y: 0,
-    },
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.3 } },
+  }
+
+  const pillVariants = {
+    hidden: { opacity: 0, y: 20 },
+  }
+
+  const letterVariants = {
+    hidden: { opacity: 0, y: 20, filter: "blur(3px)" },
   }
 
   const taglineVariants = {
-    initial: {
-      opacity: 0,
-      y: 40,
-      filter: "blur(3px)",
-    },
+    hidden: { opacity: 0, y: 40, filter: "blur(3px)" },
+  }
+
+  const buttonVariants = {
+    hidden: { opacity: 0, x: -20 },
   }
 
   const name = "Hrushikesh Anand Sarangi"
+  const nameLetters = name.split("")
+
+  const leftPills = [
+    { text: "Clean Code", color: "bg-white border-black" },
+    { text: "DevOps", color: "bg-white border-black" },
+    { text: "Full Stack Dev", color: "bg-white border-black" },
+    { text: "Fast & Responsive", color: "bg-white border-black" },
+  ]
+
+  const rightPills = [
+    { text: "2+ Years", color: "bg-white border-black" },
+    { text: "20+ Projects", color: "bg-white border-black" },
+    { text: "10+ Technologies", color: "bg-white border-black" },
+    { text: "100% Transparency", color: "bg-white border-black" },
+  ]
 
   return (
-    <div
+    <motion.div
       ref={overlayRef}
-      className="absolute top-0 left-0 w-full h-full flex flex-col justify-center items-center pointer-events-none px-4 sm:px-6 lg:px-8"
+      className="absolute top-0 left-0 w-full h-full flex flex-col md:flex-row justify-between items-center pointer-events-none px-4 sm:px-6 lg:px-8 gap-4 md:gap-0"
+      variants={containerVariants}
+      initial="hidden"
+      animate={controls}
     >
-      <div className="text-center pointer-events-auto">
-        <div className="relative inline-block w-full">
-          <motion.h1
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-black flex justify-center overflow-hidden text-balance leading-tight whitespace-nowrap min-w-fit"
-            variants={nameVariants}
-            initial="initial"
-            animate={nameControls}
-            style={{ perspective: "800px" }}
-          >
-            {name}
-          </motion.h1>
+      {/* Left Pills */}
+      <div className="flex flex-row md:flex-col flex-wrap gap-2 md:gap-4 pointer-events-auto justify-center md:justify-start">
+        {leftPills.map((pill, i) => (
           <motion.div
-            className="absolute top-0 right-0 w-full h-full bg-black"
-            initial={{ scaleX: 1 }}
-            animate={coverControls}
-            style={{ transformOrigin: "right" }}
-          />
-        </div>
+            key={i}
+            variants={pillVariants}
+            initial="hidden"
+            animate={leftControls}
+            className={`px-4 py-2 rounded-full border-2 ${pill.color} text-black font-medium shadow-lg`}
+          >
+            {pill.text}
+          </motion.div>
+        ))}
+      </div>
 
+      {/* Center Content */}
+      <div className="flex flex-col items-center text-center pointer-events-auto">
+        <motion.h1
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-black flex justify-center text-balance leading-tight whitespace-nowrap"
+          style={{ perspective: "800px" }}
+        >
+          {nameLetters.map((letter, i) => (
+            <motion.span
+              key={i}
+              variants={letterVariants}
+              initial="hidden"
+              animate={nameControls}
+              className="inline-block"
+            >
+              {letter === " " ? "\u00A0" : letter}
+            </motion.span>
+          ))}
+        </motion.h1>
         <motion.p
-          className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-black mt-4 sm:mt-6 lg:mt-8 tracking-wide text-pretty max-w-2xl mx-auto"
+          className={`${pacifico.className} text-lg sm:text-xl md:text-2xl lg:text-3xl text-black mt-2 tracking-wide text-pretty max-w-xl mx-auto`}
           variants={taglineVariants}
-          initial="initial"
+          initial="hidden"
           animate={taglineControls}
-          style={{ transformOrigin: "center" }}
         >
           Building Pragmatic Solutions
         </motion.p>
-
-        <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+        <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/projects">
             <motion.button
-              className="px-6 py-3 bg-black text-white font-medium rounded-md transition-all duration-300"
+              variants={buttonVariants}
+              initial="hidden"
+              animate={buttonsControls}
+              className="px-6 py-3 bg-black text-white font-medium rounded-full shadow-md transition-all duration-300"
               whileHover={{
                 boxShadow: "0 10px 24px rgba(0, 0, 0, 0.3)",
                 y: -2,
               }}
               whileTap={{ y: 0 }}
             >
-              Explore Projects
+              EXPLORE PROJECTS →
             </motion.button>
           </Link>
           <Link href="/about">
             <motion.button
-              className="px-6 py-3 bg-white text-black font-medium rounded-md border border-black transition-all duration-300"
+              variants={buttonVariants}
+              initial="hidden"
+              animate={buttonsControls}
+              className="px-6 py-3 bg-white text-black font-medium rounded-full border-2 border-black shadow-md transition-all duration-300"
               whileHover={{
-                boxShadow: "0 10px 24px rgba(0, 0, 0, 0.15)",
-                backgroundColor: "#f5f5f5",
+                boxShadow: "0 10px 24px rgba(0, 0, 0, 0.3)",
                 y: -2,
               }}
               whileTap={{ y: 0 }}
             >
-              About Me
+              ABOUT ME →
             </motion.button>
           </Link>
         </div>
       </div>
-    </div>
+
+      {/* Right Pills */}
+      <div className="flex flex-row md:flex-col flex-wrap gap-2 md:gap-4 pointer-events-auto justify-center md:justify-start">
+        {rightPills.map((pill, i) => (
+          <motion.div
+            key={i}
+            variants={pillVariants}
+            initial="hidden"
+            animate={rightControls}
+            className={`px-4 py-2 rounded-full border-2 ${pill.color} text-black font-medium shadow-lg`}
+          >
+            {pill.text}
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
   )
 }
 
